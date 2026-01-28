@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Mario Educational Platformer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background: #5c94fc;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100%;
+            max-width: 1000px;
+            background: #5c94fc;
+        }
+
+        canvas {
+            display: block;
+            background: linear-gradient(to bottom, #5c94fc 0%, #87ceeb 70%, #98d8c8 100%);
+            border: 4px solid #000;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+
+        #characterSelect {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 40px;
+            border-radius: 15px;
+            border: 4px solid #ffd700;
+            text-align: center;
+            z-index: 100;
+        }
+
+        #characterSelect h2 {
+            color: #ffd700;
+            font-size: 24px;
+            margin-bottom: 30px;
+            text-shadow: 3px 3px #000;
+        }
+
+        .character-option {
+            display: inline-block;
+            margin: 0 20px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .character-option:hover {
+            transform: scale(1.1);
+        }
+
+        .character-box {
+            width: 150px;
+            height: 180px;
+            background: #fff;
+            border: 4px solid #000;
+            border-radius: 10px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .character-box img {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 10px;
+        }
+
+        .character-box p {
+            font-size: 14px;
+            color: #000;
+        }
+
+        #hud {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #fff;
+            font-size: 14px;
+            text-shadow: 2px 2px #000;
+            z-index: 10;
+        }
+
+        .hud-item {
+            margin: 5px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .heart {
+            color: #ff0000;
+            margin: 0 2px;
+            font-size: 18px;
+        }
+
+        #quiz {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            border: 4px solid #ffd700;
+            min-width: 400px;
+            max-width: 500px;
+            z-index: 100;
+            display: none;
+        }
+
+        #quiz h3 {
+            color: #ffd700;
+            font-size: 16px;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .quiz-option {
+            background: #fff;
+            border: 3px solid #000;
+            padding: 12px;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 12px;
+            border-radius: 8px;
+        }
+
+        .quiz-option:hover {
+            background: #ffd700;
+            transform: translateX(5px);
+        }
+
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            padding: 40px;
+            border-radius: 15px;
+            border: 4px solid #ff0000;
+            text-align: center;
+            z-index: 100;
+            display: none;
+        }
+
+        #gameOver h2 {
+            color: #ff0000;
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+
+        #gameOver p {
+            color: #fff;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+
+        button {
+            background: #ffd700;
+            border: 3px solid #000;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-family: 'Press Start 2P', cursive;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.2s;
+            border-radius: 8px;
+        }
+
+        button:hover {
+            background: #ffed4e;
+            transform: scale(1.05);
+        }
+
+        #levelComplete {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            padding: 40px;
+            border-radius: 15px;
+            border: 4px solid #00ff00;
+            text-align: center;
+            z-index: 100;
+            display: none;
+        }
+
+        #levelComplete h2 {
+            color: #00ff00;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        
+        <div id="characterSelect">
+            <h2>SELECT YOUR CHARACTER</h2>
+            <div class="character-option" onclick="selectCharacter('mario')">
+                <div class="character-box">
+                    <div style="font-size: 60px;">🧑</div>
+                    <p>MARIO</p>
+                </div>
+            </div>
+            <div class="character-option" onclick="selectCharacter('barbie')">
+                <div class="character-box">
+                    <div style="font-size: 60px;">👸</div>
+                    <p>BARBIE</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="hud">
+            <div class="hud-item">
+                <span>LIVES: </span>
+                <span id="livesDisplay"></span>
+            </div>
+            <div class="hud-item">COINS: <span id="coins">0</span></div>
+            <div class="hud-item">SCORE: <span id="score">0</span></div>
+            <div class="hud-item">LEVEL: <span id="level">1</span></div>
+        </div>
+
+        <div id="quiz">
+            <h3 id="quizQuestion"></h3>
+            <div id="quizOptions"></div>
+        </div>
+
+        <div id="gameOver">
+            <h2>GAME OVER!</h2>
+            <p>Final Score: <span id="finalScore">0</span></p>
+            <p>Coins Collected: <span id="finalCoins">0</span></p>
+            <button onclick="restartGame()">PLAY AGAIN</button>
+        </div>
+
+        <div id="levelComplete">
+            <h2>LEVEL COMPLETE!</h2>
+            <p>Great Job!</p>
+            <button onclick="nextLevel()">NEXT LEVEL</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = 1000;
+        canvas.height = 600;
+
+        // Game state
+        let gameState = {
+            lives: 5,
+            coins: 0,
+            score: 0,
+            level: 1,
+            character: null,
+            isPaused: false,
+            gameStarted: false
+        };
+
+        // Quiz database
+        const quizzes = [
+            {
+                question: "What is 5 + 3?",
+                options: ["6", "7", "8", "9"],
+                correct: 2
+            },
+            {
+                question: "Which planet is closest to the Sun?",
+                options: ["Venus", "Mercury", "Mars", "Earth"],
+                correct: 1
+            },
+            {
+                question: "How many sides does a triangle have?",
+                options: ["2", "3", "4", "5"],
+                correct: 1
+            },
+            {
+                question: "What color do you get when you mix red and blue?",
+                options: ["Green", "Purple", "Orange", "Brown"],
+                correct: 1
+            },
+            {
+                question: "What is 10 - 4?",
+                options: ["5", "6", "7", "8"],
+                correct: 1
+            },
+            {
+                question: "Which animal is known as the King of the Jungle?",
+                options: ["Tiger", "Elephant", "Lion", "Bear"],
+                correct: 2
+            },
+            {
+                question: "How many days are in a week?",
+                options: ["5", "6", "7", "8"],
+                correct: 2
+            },
+            {
+                question: "What shape is a ball?",
+                options: ["Square", "Triangle", "Circle", "Rectangle"],
+                correct: 2
+            }
+        ];
+
+        // Player
+        const player = {
+            x: 100,
+            y: 400,
+            width: 40,
+            height: 48,
+            velocityX: 0,
+            velocityY: 0,
+            speed: 5,
+            jumpPower: 15,
+            isJumping: false,
+            direction: 'right',
+            invincible: false,
+            invincibleTimer: 0
+        };
+
+        // Game objects
+        let platforms = [];
+        let questionBlocks = [];
+        let coins = [];
+        let enemies = [];
+        let pipes = [];
+        let clouds = [];
+        let particles = [];
+        let currentQuiz = null;
+        let quizCallback = null;
+
+        // Controls
+        const keys = {
+            left: false,
+            right: false,
+            up: false
+        };
+
+        // Character selection
+        function selectCharacter(character) {
+            gameState.character = character;
+            document.getElementById('characterSelect').style.display = 'none';
+            gameState.gameStarted = true;
+            initLevel();
+            gameLoop();
+        }
+
+        // Initialize level
+        function initLevel() {
+            platforms = [];
+            questionBlocks = [];
+            coins = [];
+            enemies = [];
+            pipes = [];
+            particles = [];
+
+            // Ground
+            for (let i = 0; i < 50; i++) {
+                platforms.push({
+                    x: i * 40,
+                    y: 550,
+                    width: 40,
+                    height: 50,
+                    type: 'ground'
+                });
+            }
+
+            // Platforms
+            createPlatform(200, 450, 4);
+            createPlatform(400, 350, 3);
+            createPlatform(600, 300, 4);
+            createPlatform(850, 400, 3);
+
+            // Question blocks
+            questionBlocks.push({ x: 250, y: 350, active: true, hasQuiz: true });
+            questionBlocks.push({ x: 450, y: 250, active: true, hasQuiz: true });
+            questionBlocks.push({ x: 700, y: 200, active: true, hasQuiz: true });
+
+            // Coins
+            for (let i = 0; i < 10; i++) {
+                coins.push({
+                    x: 150 + i * 80,
+                    y: 300 - Math.sin(i) * 50,
+                    collected: false,
+                    frame: 0
+                });
+            }
+
+            // Enemies
+            enemies.push({ x: 300, y: 510, width: 40, height: 40, direction: 1, speed: 1.5, type: 'goomba' });
+            enemies.push({ x: 500, y: 510, width: 40, height: 40, direction: -1, speed: 1.5, type: 'goomba' });
+            enemies.push({ x: 750, y: 510, width: 40, height: 40, direction: 1, speed: 2, type: 'goomba' });
+
+            // Pipes
+            pipes.push({ x: 800, y: 470, width: 60, height: 80, isGoal: true });
+
+            // Clouds
+            for (let i = 0; i < 8; i++) {
+                clouds.push({
+                    x: Math.random() * 1000,
+                    y: Math.random() * 200,
+                    speed: 0.3 + Math.random() * 0.5,
+                    size: 40 + Math.random() * 30
+                });
+            }
+
+            // Reset player position
+            player.x = 100;
+            player.y = 400;
+            player.velocityX = 0;
+            player.velocityY = 0;
+        }
+
+        function createPlatform(startX, y, count) {
+            for (let i = 0; i < count; i++) {
+                platforms.push({
+                    x: startX + i * 40,
+                    y: y,
+                    width: 40,
+                    height: 20,
+                    type: 'brick'
+                });
+            }
+        }
+
+        // Show quiz
+        function showQuiz(callback) {
+            gameState.isPaused = true;
+            const quiz = quizzes[Math.floor(Math.random() * quizzes.length)];
+            currentQuiz = quiz;
+            quizCallback = callback;
+
+            document.getElementById('quizQuestion').textContent = quiz.question;
+            const optionsDiv = document.getElementById('quizOptions');
+            optionsDiv.innerHTML = '';
+
+            quiz.options.forEach((option, index) => {
+                const div = document.createElement('div');
+                div.className = 'quiz-option';
+                div.textContent = option;
+                div.onclick = () => answerQuiz(index);
+                optionsDiv.appendChild(div);
+            });
+
+            document.getElementById('quiz').style.display = 'block';
+        }
+
+        function answerQuiz(answerIndex) {
+            document.getElementById('quiz').style.display = 'none';
+            gameState.isPaused = false;
+
+            const correct = answerIndex === currentQuiz.correct;
+            if (quizCallback) {
+                quizCallback(correct);
+            }
+        }
+
+        // Update
+        function update() {
+            if (gameState.isPaused || !gameState.gameStarted) return;
+
+            // Player movement
+            if (keys.left) {
+                player.velocityX = -player.speed;
+                player.direction = 'left';
+            } else if (keys.right) {
+                player.velocityX = player.speed;
+                player.direction = 'right';
+            } else {
+                player.velocityX = 0;
+            }
+
+            // Jumping
+            if (keys.up && !player.isJumping) {
+                player.velocityY = -player.jumpPower;
+                player.isJumping = true;
+            }
+
+            // Gravity
+            player.velocityY += 0.8;
+            player.y += player.velocityY;
+            player.x += player.velocityX;
+
+            // Boundaries
+            if (player.x < 0) player.x = 0;
+            if (player.x > canvas.width - player.width) player.x = canvas.width - player.width;
+
+            // Platform collision
+            platforms.forEach(platform => {
+                if (checkCollision(player, platform)) {
+                    if (player.velocityY > 0) {
+                        player.y = platform.y - player.height;
+                        player.velocityY = 0;
+                        player.isJumping = false;
+                    }
+                }
+            });
+
+            // Question block collision
+            questionBlocks.forEach(block => {
+                if (block.active && checkCollision(player, { ...block, width: 40, height: 40 })) {
+                    if (player.velocityY < 0 && player.y + player.height < block.y + 20) {
+                        if (block.hasQuiz) {
+                            showQuiz((correct) => {
+                                if (correct) {
+                                    block.active = false;
+                                    gameState.coins += 5;
+                                    gameState.score += 100;
+                                    createParticles(block.x + 20, block.y, '#ffd700');
+                                } else {
+                                    gameState.score -= 20;
+                                }
+                                updateHUD();
+                            });
+                        }
+                    }
+                }
+            });
+
+            // Coin collection
+            coins.forEach(coin => {
+                if (!coin.collected && checkCollision(player, { ...coin, width: 30, height: 30 })) {
+                    coin.collected = true;
+                    gameState.coins++;
+                    gameState.score += 10;
+                    createParticles(coin.x, coin.y, '#ffd700');
+                    updateHUD();
+                }
+                coin.frame = (coin.frame + 0.1) % 360;
+            });
+
+            // Enemy movement and collision
+            enemies.forEach(enemy => {
+                enemy.x += enemy.direction * enemy.speed;
+
+                // Enemy boundary
+                if (enemy.x < 50 || enemy.x > 900) {
+                    enemy.direction *= -1;
+                }
+
+                // Player-enemy collision
+                if (!player.invincible && checkCollision(player, enemy)) {
+                    // Check if player jumped on enemy
+                    if (player.velocityY > 0 && player.y < enemy.y - 20) {
+                        // Kill enemy
+                        showQuiz((correct) => {
+                            if (correct) {
+                                enemy.x = -100; // Remove enemy
+                                gameState.score += 50;
+                                player.velocityY = -10; // Bounce
+                                createParticles(enemy.x, enemy.y, '#ff0000');
+                            } else {
+                                loseLife();
+                            }
+                            updateHUD();
+                        });
+                    } else {
+                        loseLife();
+                    }
+                }
+            });
+
+            // Pipe collision (goal)
+            pipes.forEach(pipe => {
+                if (pipe.isGoal && checkCollision(player, pipe)) {
+                    levelComplete();
+                }
+            });
+
+            // Update clouds
+            clouds.forEach(cloud => {
+                cloud.x += cloud.speed;
+                if (cloud.x > canvas.width + 100) {
+                    cloud.x = -100;
+                }
+            });
+
+            // Update particles
+            particles = particles.filter(p => {
+                p.y -= p.speedY;
+                p.x += p.speedX;
+                p.life--;
+                p.speedY -= 0.2;
+                return p.life > 0;
+            });
+
+            // Invincibility timer
+            if (player.invincible) {
+                player.invincibleTimer--;
+                if (player.invincibleTimer <= 0) {
+                    player.invincible = false;
+                }
+            }
+
+            // Fall death
+            if (player.y > canvas.height) {
+                loseLife();
+            }
+        }
+
+        // Render
+        function render() {
+            // Sky gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#5c94fc');
+            gradient.addColorStop(0.7, '#87ceeb');
+            gradient.addColorStop(1, '#98d8c8');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Clouds
+            clouds.forEach(cloud => {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.beginPath();
+                ctx.arc(cloud.x, cloud.y, cloud.size * 0.5, 0, Math.PI * 2);
+                ctx.arc(cloud.x + cloud.size * 0.4, cloud.y, cloud.size * 0.6, 0, Math.PI * 2);
+                ctx.arc(cloud.x + cloud.size * 0.8, cloud.y, cloud.size * 0.5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Platforms
+            platforms.forEach(platform => {
+                if (platform.type === 'ground') {
+                    // Grass on top
+                    ctx.fillStyle = '#8B4513';
+                    ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+                    ctx.fillStyle = '#228B22';
+                    ctx.fillRect(platform.x, platform.y, platform.width, 8);
+                } else {
+                    // Brick
+                    ctx.fillStyle = '#CD853F';
+                    ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+                    ctx.strokeStyle = '#8B4513';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(platform.x, platform.y, platform.width, platform.height);
+                }
+            });
+
+            // Question blocks
+            questionBlocks.forEach(block => {
+                if (block.active) {
+                    ctx.fillStyle = '#FFD700';
+                    ctx.fillRect(block.x, block.y, 40, 40);
+                    ctx.strokeStyle = '#FFA500';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(block.x, block.y, 40, 40);
+                    ctx.fillStyle = '#FFF';
+                    ctx.font = '24px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('?', block.x + 20, block.y + 28);
+                } else {
+                    ctx.fillStyle = '#8B4513';
+                    ctx.fillRect(block.x, block.y, 40, 40);
+                }
+            });
+
+            // Coins
+            coins.forEach(coin => {
+                if (!coin.collected) {
+                    const scale = Math.abs(Math.sin(coin.frame));
+                    ctx.save();
+                    ctx.translate(coin.x + 15, coin.y + 15);
+                    ctx.scale(scale, 1);
+                    ctx.fillStyle = '#FFD700';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 15, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#FFA500';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            });
+
+            // Enemies
+            enemies.forEach(enemy => {
+                if (enemy.x > -50 && enemy.x < canvas.width) {
+                    // Goomba
+                    ctx.fillStyle = '#8B4513';
+                    // Body
+                    ctx.fillRect(enemy.x + 5, enemy.y + 10, 30, 25);
+                    // Head
+                    ctx.fillStyle = '#654321';
+                    ctx.fillRect(enemy.x, enemy.y, 40, 15);
+                    // Eyes
+                    ctx.fillStyle = '#FFF';
+                    ctx.fillRect(enemy.x + 8, enemy.y + 3, 8, 8);
+                    ctx.fillRect(enemy.x + 24, enemy.y + 3, 8, 8);
+                    ctx.fillStyle = '#000';
+                    ctx.fillRect(enemy.x + 10, enemy.y + 5, 4, 4);
+                    ctx.fillRect(enemy.x + 26, enemy.y + 5, 4, 4);
+                    // Feet
+                    ctx.fillStyle = '#654321';
+                    ctx.fillRect(enemy.x + 5, enemy.y + 35, 10, 5);
+                    ctx.fillRect(enemy.x + 25, enemy.y + 35, 10, 5);
+                }
+            });
+
+            // Pipes
+            pipes.forEach(pipe => {
+                // Pipe body
+                ctx.fillStyle = '#228B22';
+                ctx.fillRect(pipe.x, pipe.y, pipe.width, pipe.height);
+                // Pipe top
+                ctx.fillStyle = '#32CD32';
+                ctx.fillRect(pipe.x - 5, pipe.y - 10, pipe.width + 10, 15);
+                // Highlights
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.fillRect(pipe.x + 5, pipe.y, 10, pipe.height);
+            });
+
+            // Player
+            if (!player.invincible || Math.floor(Date.now() / 100) % 2 === 0) {
+                const emoji = gameState.character === 'mario' ? '🧑' : '👸';
+                ctx.font = '48px Arial';
+                ctx.textAlign = 'center';
+                if (player.direction === 'right') {
+                    ctx.fillText(emoji, player.x + player.width / 2, player.y + player.height - 5);
+                } else {
+                    ctx.save();
+                    ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
+                    ctx.scale(-1, 1);
+                    ctx.fillText(emoji, 0, player.height / 2 - 5);
+                    ctx.restore();
+                }
+            }
+
+            // Particles
+            particles.forEach(p => {
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.life / 30;
+                ctx.fillRect(p.x, p.y, 5, 5);
+                ctx.globalAlpha = 1;
+            });
+        }
+
+        // Collision detection
+        function checkCollision(obj1, obj2) {
+            return obj1.x < obj2.x + obj2.width &&
+                   obj1.x + obj1.width > obj2.x &&
+                   obj1.y < obj2.y + obj2.height &&
+                   obj1.y + obj1.height > obj2.y;
+        }
+
+        // Create particles
+        function createParticles(x, y, color) {
+            for (let i = 0; i < 10; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    speedX: (Math.random() - 0.5) * 5,
+                    speedY: Math.random() * 5,
+                    life: 30,
+                    color: color
+                });
+            }
+        }
+
+        // Lose life
+        function loseLife() {
+            gameState.lives--;
+            updateHUD();
+            player.invincible = true;
+            player.invincibleTimer = 120;
+            player.x = 100;
+            player.y = 400;
+            player.velocityX = 0;
+            player.velocityY = 0;
+
+            if (gameState.lives <= 0) {
+                gameOver();
+            }
+        }
+
+        // Level complete
+        function levelComplete() {
+            gameState.isPaused = true;
+            document.getElementById('levelComplete').style.display = 'block';
+        }
+
+        // Next level
+        function nextLevel() {
+            document.getElementById('levelComplete').style.display = 'none';
+            gameState.level++;
+            gameState.isPaused = false;
+            updateHUD();
+            initLevel();
+        }
+
+        // Game over
+        function gameOver() {
+            gameState.isPaused = true;
+            document.getElementById('finalScore').textContent = gameState.score;
+            document.getElementById('finalCoins').textContent = gameState.coins;
+            document.getElementById('gameOver').style.display = 'block';
+        }
+
+        // Restart game
+        function restartGame() {
+            gameState.lives = 5;
+            gameState.coins = 0;
+            gameState.score = 0;
+            gameState.level = 1;
+            gameState.isPaused = false;
+            document.getElementById('gameOver').style.display = 'none';
+            updateHUD();
+            initLevel();
+        }
+
+        // Update HUD
+        function updateHUD() {
+            const livesDisplay = document.getElementById('livesDisplay');
+            livesDisplay.innerHTML = '';
+            for (let i = 0; i < gameState.lives; i++) {
+                livesDisplay.innerHTML += '<span class="heart">❤️</span>';
+            }
+            document.getElementById('coins').textContent = gameState.coins;
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('level').textContent = gameState.level;
+        }
+
+        // Game loop
+        function gameLoop() {
+            update();
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') keys.left = true;
+            if (e.key === 'ArrowRight') keys.right = true;
+            if (e.key === 'ArrowUp' || e.key === ' ') keys.up = true;
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft') keys.left = false;
+            if (e.key === 'ArrowRight') keys.right = false;
+            if (e.key === 'ArrowUp' || e.key === ' ') keys.up = false;
+        });
+
+        // Initialize HUD
+        updateHUD();
+    </script>
+</body>
+</html>
